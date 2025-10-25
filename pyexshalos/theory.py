@@ -478,7 +478,7 @@ def compute_sigma(
 
 
 # Compute the derivative of sigma with respect to M
-def dlnsdlnm(
+def dlns_dlnm(
     m: NDArray[np.floating], sigma: NDArray[np.floating]
 ) -> NDArray[np.floating]:
     """
@@ -721,7 +721,7 @@ def fh(
 
 
 # Compute the halo mass function
-def get_dndlnm(
+def get_dn_dlnm(
     m: NDArray[np.floating],
     sigma: Optional[NDArray[np.floating]] = None,
     model: int | str = "PS",
@@ -778,7 +778,7 @@ def get_dndlnm(
         -fh(sigma, model, theta, delta_c, omega_m0, z)
         * rho_m
         / m
-        * dlnsdlnm(m, sigma)
+        * dlns_dlnm(m, sigma)
     )
 
 
@@ -1361,7 +1361,186 @@ def get_bh3(
     return resp
 
 
-# Compute the power spectra using CLPT at first order
+# Get the mean number of central galaxies
+def get_n_central_galaxies(
+    m: NDArray[np.floating],
+    log_m_min: float = 13.25424743,
+    sig_log_m: float = 0.26461332,
+) -> NDArray[np.floating]:
+    """
+    Compute the mean number of central galaxies as a function of halo mass.
+
+    This function implements a simplified form of the satellite galaxy
+    occupation distribution, focusing on the central galaxy. The current
+    implementation uses a basic power-law relation and does not utilize
+    `log_m_min` or `sig_log_m`.
+
+    :param m: Halo mass array.
+    :type m: numpy.ndarray
+    :param log_m_min: The logarithm of the minimum halo mass for central
+                      galaxy occupation. This parameter is not currently used
+                      in the calculation. Fiducial value: 13.25424743
+    :type log_m_min: float
+    :param sig_log_m: The scatter in the logarithm of halo mass for central
+                      galaxy occupation. This parameter is not currently used
+                      in the calculation. Fiducial value: 0.26461332
+    :type sig_log_m: float
+
+    :return: The mean number of central galaxies for each halo mass.
+    :rtype: numpy.ndarray
+    """
+    # Import the erf function
+    from scipy.special import erf  # pyright: ignore[reportMissingImports]
+
+    resp = 0.5 * (1.0 + erf(np.log(m) - log_m_min / sig_log_m))
+
+    return resp
+
+
+# Get the mean number of satellite galaxies
+def get_n_satellite_galaxies(
+    m: NDArray[np.floating],
+    log_m0: float = 13.28383025,
+    log_m1: float = 14.32465146,
+    alpha: float = 1.00811277,
+) -> NDArray[np.floating]:
+    """
+    Compute the mean number of satellite galaxies as a function of halo mass.
+
+    This function implements a common functional form for the satellite
+    galaxy occupation distribution. The number of satellites is modeled as
+    a power-law that depends on the halo mass relative to two characteristic
+    mass scales, `m0` and `m1`, and an exponent `alpha`.
+
+    :param m: Halo mass array.
+    :type m: numpy.ndarray
+    :param log_m0: The logarithm of the characteristic halo mass `m0`.
+                   Fiducial value: 13.28383025
+    :type log_m0: float
+    :param log_m1: The logarithm of the characteristic halo mass `m1`.
+                   Fiducial value: 14.32465146
+    :type log_m1: float
+    :param alpha: The exponent determining the slope of the power-law
+                  for satellite galaxy abundance. Fiducial value: 1.00811277
+    :type alpha: float
+
+    :return: The mean number of satellite galaxies for each halo mass.
+    :rtype: numpy.ndarray
+    """
+    resp = np.power(
+        (m - np.power(10.0, log_m0)) / np.power(10.0, log_m1), -alpha
+    )
+
+    return resp
+
+
+# Get the mean number of galaxies
+def get_n_galaxies(
+    m: NDArray[np.floating],
+    model: int | str = "PS",
+    theta: Optional[float | NDArray[np.floating]] = None,
+    delta_c: Optional[float] = None,
+    omega_m0: float = 0.31,
+    z: float = 0.0,
+    k: Optional[NDArray[np.floating]] = None,
+    pk: Optional[NDArray[np.floating]] = None,
+    log_m_min: float = 13.25424743,
+    sig_log_m: float = 0.26461332,
+    log_m0: float = 13.28383025,
+    log_m1: float = 14.32465146,
+    alpha: float = 1.00811277,
+) -> float:
+    """
+    Compute the mean number of galaxies by integrating the product of the Halo
+    Occupation Distribution (HOD) and the Halo Mass Function (HMF) over mass.
+
+    This function calculates the total galaxy number density by first
+    determining the number of central and satellite galaxies per halo (HOD),
+    then multiplying this by the logarithmic derivative of the halo mass
+    function (dn/dlnM), and finally integrating the resulting product over
+    the logarithmic mass range.
+
+    :param m: Halo mass array.
+    :type m: numpy.ndarray
+    :param model: HMF model to use (0: Press-Schechter, 1: Sheth-Tormen,
+                  2: Tinker, 3: Linear Diffusive Barrier).
+                  Can also be a string ("PS", "ST", "Tinker", "2LDB").
+                  Fiducial value: "PS"
+    :type model: Union[int, str]
+    :param theta: Model parameters for HMF. For Sheth-Tormen: [a, b, p],
+                  for Tinker: Delta,
+                  for Linear Diffusive Barrier: [b, D, dv, J_max].
+    :type theta: Optional[Union[float, np.ndarray]]
+    :param delta_c: Critical density for collapse for HMF. Fiducial value: None
+    :type delta_c: Optional[float]
+    :param omega_m0: Omega matter at z=0. Fiducial value: 0.31
+    :type omega_m0: float
+    :param z: Redshift. Fiducial value: 0.0
+    :type z: float
+    :param k: Wavenumbers of the power spectrum (only if sigma for HMF is None).
+              Fiducial value: None
+    :type k: Optional[numpy.ndarray]
+    :param pk: Power spectrum (required if sigma for HMF is None).
+               Fiducial value: None
+    :type pk: Optional[numpy.ndarray]
+    :param log_m_min: The logarithm of the minimum halo mass for central
+                      galaxy occupation. Fiducial value: 13.25424743
+    :type log_m_min: float
+    :param sig_log_m: The scatter in the logarithm of halo mass for central
+                      galaxy occupation. Fiducial value: 0.26461332
+    :type sig_log_m: float
+    :param log_m0: The logarithm of the characteristic halo mass `m0` for
+                   satellite galaxy occupation. Fiducial value: 13.28383025
+    :type log_m0: float
+    :param log_m1: The logarithm of the characteristic halo mass `m1` for
+                   satellite galaxy occupation. Fiducial value: 14.32465146
+    :type log_m1: float
+    :param alpha: The exponent for satellite galaxy abundance.
+                  Fiducial value: 1.00811277
+    :type alpha: float
+
+    :return: The total mean number density of galaxies (N_gal).
+    :rtype: float
+    """
+    # Import the Simpson's rule integration function
+    from scipy.integrate import (
+        simpson,  # pyright: ignore[reportUnknownVariableType]
+    )
+
+    # Compute the mean number of central galaxies for each halo mass
+    n_central = get_n_central_galaxies(m, log_m_min, sig_log_m)
+
+    # Compute the mean number of satellite galaxies for each halo mass
+    n_satellite = get_n_satellite_galaxies(m, log_m0, log_m1, alpha)
+
+    # Total number of galaxies per halo (sum of central and satellite HOD)
+    n_gal_per_halo = n_central + n_satellite
+
+    # Compute the halo mass function (dn/dlnm)
+    # The get_dn_dlnm function will compute sigma internally if k and pk are provided.
+    dn_dlnm_val = get_dn_dlnm(
+        m=m,
+        sigma=None,  # sigma is not explicitly passed to this function
+        model=model,
+        theta=theta,
+        delta_c=delta_c,
+        omega_m0=omega_m0,
+        z=z,
+        k=k,
+        pk=pk,
+    )
+
+    # The integrand for the total number of galaxies is N_gal(m) * dn/dlnM.
+    # We need to integrate this product with respect to ln(m).
+    integrand = n_gal_per_halo * dn_dlnm_val
+
+    # Compute the integral using Simpson's rule
+    # The integration variable is ln(m)
+    total_n_galaxies: float = simpson(integrand, x=np.log(m))
+
+    return total_n_galaxies
+
+
 def clpt_powers(
     k: NDArray[np.floating],
     pk: NDArray[np.floating],
