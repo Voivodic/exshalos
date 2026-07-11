@@ -5,6 +5,7 @@ This module compute quantities from data of simulations.
 from typing import Dict, Optional, Union
 import numpy as np
 
+
 # Compute the density grid
 def Compute_Density_Grid(
     pos: np.ndarray,
@@ -859,7 +860,7 @@ def Compute_Bias_Jens(
              - "Mh": Ndarray
              - "Unmasked": Ndarray
              - "Masked": Ndarray
-             
+
     :rtype: dict
     """
     # Smooth the density field
@@ -924,7 +925,105 @@ def Compute_Bias_Jens(
     # Normalize the histograms
     if Normalized == True:
         x["Unmasked"] = x["Unmasked"] / np.sum(x["Unmasked"])
-        x["Masked"] = x["Masked"] / \
-            np.sum(x["Masked"], axis=1).reshape([Nm, 1])
+        x["Masked"] = x["Masked"] / np.sum(x["Masked"], axis=1).reshape([Nm, 1])
 
     return x
+
+
+# Find halos and voids from a particle distribution using voro++
+def halo_void_finder(
+    particles: np.ndarray,
+    L: float,
+    delta_h: Optional[float] = None,
+    delta_v: Optional[float] = None,
+    nd: Optional[int] = None,
+    r_max: float = 20.0,
+) -> Dict[str, np.ndarray]:
+    """
+    Find spherical halos and voids from a 2D or 3D particle distribution.
+
+    The dimensionality is decided from the shape of ``particles``: (N, 2) is
+    treated as 2D and (N, 3) as 3D. The local density is estimated from the
+    inverse of the Voronoi cell volumes (areas in 2D).
+
+    :param particles: Array of shape (N, 2) or (N, 3) with the positions.
+    :type particles: numpy.ndarray
+    :param L: Size of the (cubic) box in Mpc/h.
+    :type L: float
+    :param delta_h: Halo overdensity threshold. None or <= 0 disables halos. Fiducial value: None
+    :type delta_h: Optional[float]
+    :param delta_v: Void overdensity threshold. None or <= 0 disables voids. Fiducial value: None
+    :type delta_v: Optional[float]
+    :param nd: Number of container divisions per dimension used by voro++. Fiducial value: None
+    :type nd: Optional[int]
+    :param r_max: Maximum radius of a halo/void in Mpc/h. Fiducial value: 20.0
+    :type r_max: float
+
+    :return: Dictionary with keys "halos" and "voids", each an ndarray of
+             shape (M, dim+1) with columns (x, y(, z), radius).
+    :rtype: dict
+    """
+    # Check if both delta_h and delta_v are None
+    if delta_h is None and delta_v is None:
+        raise ValueError("Both delta_h and delta_v cannot be None or <= 0!")
+
+    # Check the precision and convert the arrays
+    from .lib.finder import check_precision
+
+    # Get the precision
+    precision = check_precision()
+
+    # Validate the particle array and infer the dimensionality from its shape
+    if precision == 4:
+        particles = np.ascontiguousarray(particles, dtype=np.float32)
+    else:
+        particles = np.ascontiguousarray(particles, dtype=np.float64)
+    if particles.ndim != 2 or particles.shape[1] not in (2, 3):
+        raise ValueError(
+            f"particles must have shape (N, 2) or (N, 3), got %{str(particles.shape)}"
+        )
+    dim = particles.shape[1]
+
+    # Set the value of nd if it was not given
+    if nd is None:
+        if dim == 2:
+            nd = particles.shape[0] // 64
+        elif dim == 3:
+            nd = particles.shape[0] // 512
+
+    # Normalise the thresholds: None or <= 0 means "do not find"
+    find_halos = 0 if (delta_h is None or delta_h <= 0.0) else 1
+    find_voids = 0 if (delta_v is None or delta_v <= 0.0) else 1
+    delta_h = 0.0 if (delta_h is None or delta_h <= 0.0) else delta_h
+    delta_v = 0.0 if (delta_v is None or delta_v <= 0.0) else delta_v
+
+    # Set the correct precision to the floats
+    if precision == 4:
+        delta_h = np.float32(delta_h)
+        delta_v = np.float32(delta_v)
+        L = np.float32(L)
+        r_max = np.float32(r_max)
+    else:
+        delta_h = np.float64(delta_h)
+        delta_v = np.float64(delta_v)
+        L = np.float64(L)
+        r_max = np.float64(r_max)
+
+    # Call the C/C++ function of the corresponding dimension
+    from .lib.finder import find
+
+    out = find(
+        particles,
+        np.int32(find_halos),
+        np.int32(find_voids),
+        delta_h,
+        delta_v,
+        L,
+        np.int32(nd),
+        r_max,
+    )
+
+    # Reshape to (M, dim+1): columns x(,y(,z)) + radius
+    out["halos"] = out["halos"].reshape([-1, dim + 1])
+    out["voids"] = out["voids"].reshape([-1, dim + 1])
+    return {"halos": out["halos"], "voids": out["voids"]}
