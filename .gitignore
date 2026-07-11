@@ -1,2 +1,7 @@
 **/__pycache__
 install/exshalos.sif
+pyexshalos/lib
+graphify-out/
+!graphify-out/GRAPH_REPORT.md 
+!graphify-out/graph.html
+!graphify-out/graph.json
