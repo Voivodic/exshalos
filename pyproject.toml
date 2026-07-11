@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "numpy"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-fancy-pypi-readme", "numpy"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pyexshalos"
@@ -14,5 +14,8 @@ dependencies = [
     "scipy",
 ]
 
-[tool.setuptools.packages]
-find = {}
+[tool.hatch.build.targets.wheel]
+artifacts = ["zig-out/lib/*"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "build_backend.py"
