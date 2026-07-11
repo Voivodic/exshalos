@@ -968,7 +968,7 @@ def halo_void_finder(
         raise ValueError("Both delta_h and delta_v cannot be None or <= 0!")
 
     # Check the precision and convert the arrays
-    from .lib.finder import check_precision
+    from .lib.halovoid import check_precision
 
     # Get the precision
     precision = check_precision()
