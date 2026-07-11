@@ -1,6 +1,7 @@
 """
 Setup script for the pyexshalos package
 """
+
 # Libraries used for the buildind process
 import os
 import numpy
@@ -28,6 +29,7 @@ extra_link_args = ["-lgomp"]
 # Set the extra compile argumments
 extra_compile_args = [
     "-g",
+    "-O2",
     "-funroll-loops",
     "-fopenmp",
 ]
@@ -36,6 +38,7 @@ extra_compile_args = [
 DOUBLE_PRECISION = False
 if DOUBLE_PRECISION:
     fftw3_libs = ["fftw3", "fftw3_omp"]
+    extra_compile_args += ["-DDOUBLEPRECISION_FFTW"]
 else:
     fftw3_libs = ["fftw3f", "fftw3f_omp"]
 
@@ -79,7 +82,7 @@ extensions = [
         library_dirs=library_dirs,
         libraries=["m", "fftw3", "gsl", "gslcblas"] + fftw3_libs,
         extra_link_args=extra_link_args,
-        extra_compile_args=extra_compile_args
+        extra_compile_args=extra_compile_args,
     ),
     # Module that populate the halos using a HOD
     Extension(
@@ -111,7 +114,31 @@ extensions = [
         library_dirs=library_dirs,
         libraries=["m", "fftw3", "gsl", "gslcblas"],
         extra_link_args=extra_link_args,
-        extra_compile_args=extra_compile_args
+        extra_compile_args=extra_compile_args,
+    ),
+    # Module that finds halos and voids from a particle distribution using voro++.
+    Extension(
+        "pyexshalos.lib.halovoid",
+        sources=[
+            "src/halovoid/finder.cpp",
+            "src/halovoid/halovoid_h.cpp",
+            "src/halovoid/halovoid.cpp",
+        ],
+        language="c++",
+        include_dirs=include_dirs
+        + [
+            os.environ.get("VORO_2D_SRC", "/usr/local/src/voro/2d/src"),
+            os.environ.get("VORO_INC", "/usr/local/include"),
+            "include/halovoid/",
+        ],
+        library_dirs=library_dirs
+        + [
+            os.environ.get("VORO_2D_LIB", "/usr/local/lib"),
+            os.environ.get("VORO_LIB", "/usr/local/lib"),
+        ],
+        libraries=["voro++_2d", "voro++", "m"],
+        extra_link_args=extra_link_args,
+        extra_compile_args=["-g", "-O2", "-fopenmp", "-std=c++23"],
     ),
 ]
 
