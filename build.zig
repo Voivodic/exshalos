@@ -229,6 +229,17 @@ pub fn build(b: *std.Build) void {
         mod.addSystemIncludePath(.{ .cwd_relative = env.py_include });
         mod.addSystemIncludePath(.{ .cwd_relative = env.numpy_include });
         if (env.gcc_include.len > 0) mod.addSystemIncludePath(.{ .cwd_relative = env.gcc_include });
+        
+        // --- MACOS FIX: Add Homebrew OpenMP Include Paths ---
+        if (target.result.os.tag == .macos) {
+            if (target.result.cpu.arch == .aarch64) {
+                mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/libomp/include" });
+            } else {
+                mod.addSystemIncludePath(.{ .cwd_relative = "/usr/local/opt/libomp/include" });
+            }
+        }
+        // ----------------------------------------------------
+
         const inc_path = b.fmt("include/{s}", .{ext.include_subdir});
         mod.addIncludePath(b.path(inc_path));
         if (ext.voro) {
@@ -239,6 +250,16 @@ pub fn build(b: *std.Build) void {
         // 4 — Library search paths (from $LIBRARY_PATH + gcc libgomp dir)
         for (env.lib_paths) |p| mod.addLibraryPath(.{ .cwd_relative = p });
         if (env.gomp_dir.len > 0) mod.addLibraryPath(.{ .cwd_relative = env.gomp_dir });
+
+        // --- MACOS FIX: Add Homebrew OpenMP Library Paths ---
+        if (target.result.os.tag == .macos) {
+            if (target.result.cpu.arch == .aarch64) {
+                mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/libomp/lib" });
+            } else {
+                mod.addLibraryPath(.{ .cwd_relative = "/usr/local/opt/libomp/lib" });
+            }
+        }
+        // ----------------------------------------------------
 
         // 5 — Libraries (.needed = true forces DT_NEEDED even if only an
         //     indirect dep needs it — e.g. libgsl needs cblas_* from gslcblas)
@@ -264,6 +285,12 @@ pub fn build(b: *std.Build) void {
             .root_module = mod,
             .linkage = .dynamic,
         });
+        
+        // --- MACOS FIX: Allow undefined symbols for Python C-API ---
+        if (target.result.os.tag == .macos) {
+            lib.linker_allow_shlib_undefined = true;
+        }
+        // -----------------------------------------------------------
 
         // 7 — Install with Python extension suffix
         const dest = b.fmt("lib/{s}{s}", .{ ext.name, env.ext_suffix });
