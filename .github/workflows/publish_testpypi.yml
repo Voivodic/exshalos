@@ -70,9 +70,9 @@ jobs:
             yum install -y fftw-devel gsl-devel &&
             ARCH=$(uname -m) &&
             if [ "$ARCH" = "x86_64" ]; then ZIG_ARCH="x86_64"; else ZIG_ARCH="aarch64"; fi &&
-            curl -fL -O "https://ziglang.org/download/0.16.0/zig-${ZIG_ARCH}-linux-0.16.0.tar.xz" &&
-            tar -xf zig-*-linux.tar.xz &&
-            mv zig-*-linux/zig /usr/local/bin/
+            curl -fL -o zig.tar.xz "https://ziglang.org/download/0.16.0/zig-${ZIG_ARCH}-linux-0.16.0.tar.xz" &&
+            tar -xf zig.tar.xz &&
+            mv zig-*/zig /usr/local/bin/
 
           CIBW_SKIP: "cp36-* cp37-* cp38-* cp39-* cp310-* pp* *musllinux*"
 
