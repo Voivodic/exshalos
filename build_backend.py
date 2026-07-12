@@ -19,7 +19,7 @@ class CustomBuildHook(BuildHookInterface):
         # Run your build step (The "zig build" part)
         cmd = ["zig", "build", "-Doptimize=ReleaseFast"]
         if platform.system() == "Darwin":
-            cmd.append("-Dtarget=aarch64-macos.14")
+            cmd.append("-Dtarget=aarch64-macos.14.0.0")
         print(f"Compiling ExSHalos native extensions... ({' '.join(cmd)})")
         subprocess.check_call(cmd)
 
