@@ -229,13 +229,14 @@ pub fn build(b: *std.Build) void {
         mod.addSystemIncludePath(.{ .cwd_relative = env.py_include });
         mod.addSystemIncludePath(.{ .cwd_relative = env.numpy_include });
         if (env.gcc_include.len > 0) mod.addSystemIncludePath(.{ .cwd_relative = env.gcc_include });
-        
-        // --- MACOS FIX: Add Homebrew OpenMP Include Paths ---
-        // if (target.result.os.tag == .macos) {
-        //     mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
-        //     mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
-        // }
-        
+
+        // --- MACOS FIX: Add Homebrew paths (fftw/gsl install directly here;
+        //     libomp header + libomp/libgomp dylibs are symlinked here by the CI step) ---
+        if (target.result.os.tag == .macos) {
+            mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
+            mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
+        }
+
         // ----------------------------------------------------
 
         const inc_path = b.fmt("include/{s}", .{ext.include_subdir});
@@ -279,7 +280,7 @@ pub fn build(b: *std.Build) void {
         if (target.result.os.tag == .macos) {
             lib.linker_allow_shlib_undefined = true;
         }
-        
+
         // -----------------------------------------------------------
 
         // 7 — Install with Python extension suffix
