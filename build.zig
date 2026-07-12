@@ -231,10 +231,10 @@ pub fn build(b: *std.Build) void {
         if (env.gcc_include.len > 0) mod.addSystemIncludePath(.{ .cwd_relative = env.gcc_include });
         
         // --- MACOS FIX: Add Homebrew OpenMP Include Paths ---
-        if (target.result.os.tag == .macos) {
-            mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
-            mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
-        }
+        // if (target.result.os.tag == .macos) {
+        //     mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
+        //     mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
+        // }
         
         // ----------------------------------------------------
 

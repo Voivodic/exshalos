@@ -60,8 +60,12 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install fftw gsl libomp
+
+          # Symlink the OpenMP header into the default Homebrew include directory
+          sudo ln -s /opt/homebrew/opt/libomp/include/omp.h /opt/homebrew/include/omp.h
           
-          # Create symlinks so the linker can find libgomp via libomp
+          # Symlink the OpenMP libraries into the default Homebrew lib directory
+          sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libomp.dylib
           sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libgomp.dylib
 
       - name: Build wheels
