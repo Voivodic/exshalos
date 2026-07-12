@@ -232,8 +232,8 @@ pub fn build(b: *std.Build) void {
         
         // --- MACOS FIX: Add Homebrew OpenMP Include Paths ---
         if (target.result.os.tag == .macos) {
-            mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/libomp/include" });
-            mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/libomp/lib" });
+            mod.addSystemIncludePath(.{ .cwd_relative = "/opt/homebrew/include" });
+            mod.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/lib" });
         }
         
         // ----------------------------------------------------
