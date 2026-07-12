@@ -84,6 +84,12 @@ jobs:
           # (This is safe because QEMU natively emulates aarch64 inside the Docker container)
           CIBW_ARCHS_LINUX: "auto64 aarch64"
 
+          # Use manylinux_2_28 (AlmaLinux 8, GCC 12) instead of the default
+          # manylinux2014 (CentOS 7, devtoolset-10). manylinux2014's toolchain
+          # lacks libgomp_nonshared.a and its gsl-devel (2.6) lacks gsl_filter.h.
+          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
+          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
+
           # Linux Docker environment compilation adjustments
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y epel-release &&
@@ -95,10 +101,7 @@ jobs:
             mv zig-*/ /usr/local/zig &&
             ln -s /usr/local/zig/zig /usr/local/bin/zig
 
-          # Drop manylinux2014: its devtoolset-10 lacks libgomp_nonshared.a and
-          # its gsl-devel (2.6) lacks gsl_filter.h. manylinux_2_28 (GCC 12,
-          # gsl 2.7.1) has both.
-          CIBW_SKIP: "cp36-* cp37-* cp38-* cp39-* cp310-* pp* *musllinux* *manylinux2014*"
+          CIBW_SKIP: "cp36-* cp37-* cp38-* cp39-* cp310-* pp* *musllinux*"
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
