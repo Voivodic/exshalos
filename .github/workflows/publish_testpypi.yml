@@ -54,6 +54,13 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install fftw gsl libomp zig
+          
+          # Create symlinks so the linker can find libgomp via libomp
+          sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libgomp.dylib
+          
+          # Pass Homebrew paths to env vars so compiler tools see them automatically
+          echo "LDFLAGS=-L/opt/homebrew/lib -L/opt/homebrew/opt/libomp/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I/opt/homebrew/include -I/opt/homebrew/opt/libomp/include" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
