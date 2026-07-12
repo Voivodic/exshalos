@@ -72,7 +72,7 @@ jobs:
           sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libgomp.dylib
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v4.1.0
         env:
           # Tell cibuildwheel/delocate that this wheel requires macOS 14.0+
           MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -83,12 +83,6 @@ jobs:
           # Build both Intel (auto64) and ARM (aarch64) wheels on Linux
           # (This is safe because QEMU natively emulates aarch64 inside the Docker container)
           CIBW_ARCHS_LINUX: "auto64 aarch64"
-
-          # Use manylinux_2_28 (AlmaLinux 8, GCC 12) instead of the default
-          # manylinux2014 (CentOS 7, devtoolset-10). manylinux2014's toolchain
-          # lacks libgomp_nonshared.a and its gsl-devel (2.6) lacks gsl_filter.h.
-          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
 
           # Linux Docker environment compilation adjustments
           CIBW_BEFORE_ALL_LINUX: >
