@@ -264,7 +264,10 @@ pub fn build(b: *std.Build) void {
         for (fftw_libs) |lib| {
             mod.linkSystemLibrary(lib, .{ .needed = true });
         }
-        mod.linkSystemLibrary("gomp", .{ .needed = true }); // OpenMP runtime
+        // OpenMP runtime: must link libomp (LLVM __kmpc_* API), NOT libgomp
+        // (GNU GOMP_* API). Zig's clang generates __kmpc_* calls under -fopenmp.
+        // libgomp is still pulled in transitively by libfftw3_*_omp (GCC-built).
+        mod.linkSystemLibrary("omp", .{ .needed = true });
 
         if (double_precision) {
             mod.addCMacro("DOUBLEPRECISION_FFTW", "");

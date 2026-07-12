@@ -67,9 +67,8 @@ jobs:
           # Symlink the OpenMP header into the default Homebrew include directory
           sudo ln -s /opt/homebrew/opt/libomp/include/omp.h /opt/homebrew/include/omp.h
 
-          # Symlink the OpenMP libraries into the default Homebrew lib directory
+          # Symlink libomp.dylib into the default Homebrew lib directory
           sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libomp.dylib
-          sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libgomp.dylib
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.1.0
@@ -87,7 +86,7 @@ jobs:
           # Linux Docker environment compilation adjustments
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y epel-release &&
-            yum install -y fftw-devel gsl-devel &&
+            yum install -y fftw-devel gsl-devel libomp-devel &&
             ARCH=$(uname -m) &&
             if [ "$ARCH" = "x86_64" ]; then ZIG_ARCH="x86_64"; else ZIG_ARCH="aarch64"; fi &&
             curl -fL -o zig.tar.xz "https://ziglang.org/download/0.16.0/zig-${ZIG_ARCH}-linux-0.16.0.tar.xz" &&
