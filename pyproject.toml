@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-artifacts = ["zig-out/lib/*"]
+artifacts = ["pyexshalos/lib/*"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = "build_backend.py"
