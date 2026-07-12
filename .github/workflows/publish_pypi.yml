@@ -1,7 +1,9 @@
-name: publish_testpypi
+name: publish_pypi
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build_sdist:
@@ -103,11 +105,11 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
-  publish_testpypi:
-    name: Publish to TestPyPI
+  publish_pypi:
+    name: Publish to PyPI
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
-    environment: testpypi
+    environment: pypi
     permissions:
       id-token: write
       contents: read
@@ -119,7 +121,5 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish distribution to TestPyPI
+      - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
