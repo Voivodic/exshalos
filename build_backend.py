@@ -3,6 +3,7 @@ import subprocess
 import shutil
 import numpy
 import sysconfig
+import platform
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 class CustomBuildHook(BuildHookInterface):
@@ -16,8 +17,11 @@ class CustomBuildHook(BuildHookInterface):
         # os.environ["NUMPY_INCLUDE_DIR"] = numpy.get_include()
 
         # Run your build step (The "zig build" part)
-        print("Compiling ExSHalos native extensions via Zig...")
-        subprocess.check_call(["zig", "build", "-Doptimize=ReleaseFast"])
+        cmd = ["zig", "build", "-Doptimize=ReleaseFast"]
+        if platform.system() == "Darwin":
+            cmd.append("-Dtarget=aarch64-macos.14")
+        print(f"Compiling ExSHalos native extensions... ({' '.join(cmd)})")
+        subprocess.check_call(cmd)
 
         # Copy the artifact into your package directory (The "cp" part)
         zig_out = os.path.join("zig-out", "lib")
