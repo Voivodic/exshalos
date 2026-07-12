@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libfftw3-dev libgsl-dev libgslcblas0 libomp-dev
-      
+
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
         with:
@@ -39,7 +39,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # macos-14 (Sonoma, arm64) pinned: macos-latest is now macOS 26,
+        # whose Homebrew dylibs require deployment target 26.0 and break
+        # delocate under MACOSX_DEPLOYMENT_TARGET=14.0.
+        os: [ubuntu-latest, macos-14]
 
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +66,7 @@ jobs:
 
           # Symlink the OpenMP header into the default Homebrew include directory
           sudo ln -s /opt/homebrew/opt/libomp/include/omp.h /opt/homebrew/include/omp.h
-          
+
           # Symlink the OpenMP libraries into the default Homebrew lib directory
           sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libomp.dylib
           sudo ln -s /opt/homebrew/opt/libomp/lib/libomp.dylib /opt/homebrew/lib/libgomp.dylib
@@ -76,7 +79,7 @@ jobs:
 
           # Build natively on macOS to prevent `zig build` from compiling the wrong architecture
           CIBW_ARCHS_MACOS: "native"
-          
+
           # Build both Intel (auto64) and ARM (aarch64) wheels on Linux
           # (This is safe because QEMU natively emulates aarch64 inside the Docker container)
           CIBW_ARCHS_LINUX: "auto64 aarch64"
