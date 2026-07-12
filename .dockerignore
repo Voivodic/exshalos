@@ -16,3 +16,8 @@ docs/
 LICENSE
 README.md
 tutorials/
+
+# Ignore the Zig folder
+zig-out/
+zig-pkg/
+.zig-cache/
