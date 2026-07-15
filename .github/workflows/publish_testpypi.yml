@@ -81,7 +81,8 @@ jobs:
 
           # Build both Intel (auto64) and ARM (aarch64) wheels on Linux
           # (This is safe because QEMU natively emulates aarch64 inside the Docker container)
-          CIBW_ARCHS_LINUX: "auto64 aarch64"
+          # CIBW_ARCHS_LINUX: "auto64 aarch64"
+          CIBW_ARCHS_LINUX: "auto64"
 
           # Linux Docker environment compilation adjustments
           CIBW_BEFORE_ALL_LINUX: >
