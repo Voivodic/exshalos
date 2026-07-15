@@ -4,15 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyexshalos"
-version = "1.0.0"
+version = "1.0.1"
 description = "A pyhon package for ExSHalos"
-authors = [
-    {name = "Rodrigo Voivodic", email = "rodrigo.voivodic@gmail.com"}
-]
-dependencies = [
-    "numpy",
-    "scipy",
-]
+authors = [{ name = "Rodrigo Voivodic", email = "rodrigo.voivodic@gmail.com" }]
+dependencies = ["numpy", "scipy"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = ["pyexshalos/lib/*"]
