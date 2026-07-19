@@ -1,11 +1,12 @@
 [build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme", "numpy"]
+requires = ["hatchling", "hatch-fancy-pypi-readme", "numpy", "zig"]
 build-backend = "hatchling.build"
 
 [project]
 name = "pyexshalos"
 version = "1.0.1"
 description = "A pyhon package for ExSHalos"
+readme = "README.md"
 authors = [{ name = "Rodrigo Voivodic", email = "rodrigo.voivodic@gmail.com" }]
 dependencies = ["numpy", "scipy"]
 

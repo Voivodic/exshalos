@@ -10,15 +10,24 @@ typedef float fft_real;
 #define NP_OUT_TYPE NPY_FLOAT
 #endif
 
+// Include headers for the Voronoi computations
+#include <array>
+#include <math.h>
+
 // Define unsigned integers
 using uint = unsigned int;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Struct for the halos and voids
+struct halo_void {
+    fft_real x[3];
+    fft_real rho;
+};
 
-#ifdef __cplusplus
-}
-#endif
+// Get the cell index of a particle
+size_t get_cell_index(const fft_real p[3], size_t Nd, fft_real scale);
+
+// Organize the particles in a 3D grid
+void create_container(fft_real *pos, size_t *offset, size_t Np, size_t Nd,
+                      fft_real L);
 
 #endif

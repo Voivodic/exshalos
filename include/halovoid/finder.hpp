@@ -2,20 +2,16 @@
 #ifndef FINDER_H
 #define FINDER_H
 
+#include "cell.hh"
 #include "halovoid_h.hpp"
-#include "voro++.hh"
+#include <algorithm> // For std::sort
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Global compile-time constant array
+constexpr std::array<std::array<std::array<int, 3>, 27>, 8>
+compute_neighbor_order();
 
-int find_halos_voids(const fft_real *pos, size_t N, int find_halos,
-                     int find_voids, fft_real delta_h, fft_real delta_v,
-                     fft_real L, uint nd, fft_real r_max, fft_real **halos_out,
-                     size_t *n_halos, fft_real **voids_out, size_t *n_voids);
-
-#ifdef __cplusplus
-}
-#endif
+// Compute the total volume of all cells
+double total_volume(const fft_real *p, const size_t *offset, size_t Np,
+                    size_t Nd, fft_real L);
 
 #endif

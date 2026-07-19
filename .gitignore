@@ -9,3 +9,4 @@ graphify-out/
 zig-out/
 zig-pkg/
 .zig-cache/
+.clangd

@@ -11,6 +11,7 @@ const std = @import("std");
 
 // ─── Per-module configuration ────────────────────────────────────────────
 
+// Structure for the C/C++ modules
 const ExtModule = struct {
     name: []const u8,
     src_dir: []const u8,
@@ -21,6 +22,7 @@ const ExtModule = struct {
     voro: bool = false,
 };
 
+// List of the C/C++ modules
 const modules = [_]ExtModule{
     .{
         .name = "spectrum",
@@ -70,6 +72,7 @@ const modules = [_]ExtModule{
 
 // ─── Environment detection ─────────────────────────────────────────────────
 
+// Structure for the information about the env
 const EnvInfo = struct {
     py_include: []const u8,
     numpy_include: []const u8,
@@ -79,6 +82,7 @@ const EnvInfo = struct {
     gcc_include: []const u8,
 };
 
+// Run a bash command and capture its outputs
 fn runCapture(b: *std.Build, argv: []const []const u8) ![]const u8 {
     const result = std.process.run(b.graph.arena, b.graph.io, .{
         .argv = argv,
@@ -87,6 +91,7 @@ fn runCapture(b: *std.Build, argv: []const []const u8) ![]const u8 {
     return std.mem.trim(u8, result.stdout, " \r\n");
 }
 
+// Collect information about the current env
 fn detectEnv(b: *std.Build) !EnvInfo {
     // Python + numpy in one subprocess
     const py_script =
@@ -106,6 +111,7 @@ fn detectEnv(b: *std.Build) !EnvInfo {
         return error.PythonNotFound;
     };
 
+    // Parse the informations about Python + numpy
     var it = std.mem.splitScalar(u8, py_out, '\n');
     const py_include = std.mem.trim(u8, it.next() orelse "", " \r");
     const ext_suffix = std.mem.trim(u8, it.next() orelse "", " \r");
@@ -188,8 +194,8 @@ pub fn build(b: *std.Build) void {
         const m = b.createModule(.{ .target = target, .optimize = optimize, .link_libcpp = true, .pic = true });
         m.addCSourceFiles(.{
             .root = voro_dep.path("src"),
-            .files = &.{ "cell.cc", "common.cc", "container.cc", "unitcell.cc", "v_compute.cc", "c_loops.cc", "v_base.cc", "wall.cc", "pre_container.cc", "container_prd.cc" },
-            .flags = &.{ "-O2", "-fopenmp" },
+            .files = &.{ "cell.cc", "common.cc" },
+            .flags = &.{ "-O3", "-fopenmp" },
             .language = .cpp,
         });
         m.addIncludePath(voro_dep.path("src"));
@@ -199,8 +205,8 @@ pub fn build(b: *std.Build) void {
         const m = b.createModule(.{ .target = target, .optimize = optimize, .link_libcpp = true, .pic = true });
         m.addCSourceFiles(.{
             .root = voro_dep.path("2d/src"),
-            .files = &.{ "common.cc", "cell_2d.cc", "container_2d.cc", "v_base_2d.cc", "v_compute_2d.cc", "c_loops_2d.cc", "wall_2d.cc", "cell_nc_2d.cc", "ctr_boundary_2d.cc", "ctr_quad_2d.cc", "quad_march.cc" },
-            .flags = &.{ "-O2", "-fopenmp" },
+            .files = &.{ "common.cc", "cell_2d.cc" },
+            .flags = &.{ "-O3", "-fopenmp" },
             .language = .cpp,
         });
         m.addIncludePath(voro_dep.path("2d/src"));

@@ -930,6 +930,41 @@ def Compute_Bias_Jens(
     return x
 
 
+# Compute the total volume of all cells
+def total_volume(particles: np.ndarray, Nd: int, L: float) -> float:
+    """
+    Compute the total volume of all cells.
+
+    Parameters
+    ----------
+    particles : np.ndarray
+        The particles positions.
+    Nd : int
+        The number of cells in each dimension.
+    L : float
+        The length of the box.
+
+    Returns
+    -------
+    float
+        The total volume of all cells.
+    """
+    # Check the precision and convert the arrays
+    from .lib.halovoid import check_precision
+
+    precision = check_precision()
+    if precision == 4:
+        particles = np.ascontiguousarray(particles, dtype=np.float32)
+        L = np.float32(L)
+    else:
+        particles = np.ascontiguousarray(particles, dtype=np.float64)
+        L = np.float64(L)
+
+
+    from .lib.halovoid import total_volume
+    return total_volume(particles, np.int32(Nd), L)
+
+
 # Find halos and voids from a particle distribution using voro++
 def halo_void_finder(
     particles: np.ndarray,
